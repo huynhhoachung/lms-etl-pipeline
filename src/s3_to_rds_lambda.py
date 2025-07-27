@@ -18,9 +18,9 @@ session = boto3.Session()
 
 # Function to create a SQLAlchemy engine for the business tracking database
 def create_db_engine():
-    db_url = f"postgresql://{os.environ.get('BUSINESS_TRACKING_USER')}:{os.environ.get('BUSINESS_TRACKING_PASSWORD')}@" \
-             f"{os.environ.get('BUSINESS_TRACKING_HOST')}:{os.environ.get('BUSINESS_TRACKING_PORT')}/" \
-             f"{os.environ.get('BUSINESS_TRACKING_DBNAME')}?sslmode={os.environ.get('BUSINESS_TRACKING_SSLMODE')}"
+    db_url = f"postgresql://{os.environ.get('RDS_USER')}:{os.environ.get('RDS_PASSWORD')}@" \
+             f"{os.environ.get('RDS_HOST')}:{os.environ.get('RDS_PORT')}/" \
+             f"{os.environ.get('RDS_DBNAME')}?sslmode={os.environ.get('RDS_SSLMODE')}"
     engine = create_engine(db_url) 
     logger.info("SQLAlchemy engine created for business tracking database.")
     return engine
@@ -139,7 +139,7 @@ def lambda_handler(event, context):
         engine = create_db_engine()
 
         # Retrieve schema of the destination table
-        schema_info = get_table_schema(engine, os.environ.get("BUSINESS_TRACKING_SCHEMA"), 'department_members')
+        schema_info = get_table_schema(engine, os.environ.get("RDS_SCHEMA"), 'department_members')
 
         # Convert DataFrame data types to match the destination table schema
         convert_dataframe_dtypes(df, schema_info)
@@ -147,7 +147,7 @@ def lambda_handler(event, context):
         # Parse datetime column
         parse_datetime_columns(df, ['date_hired','date_terminated','date_edited','date_added','last_login_date'])
         # Upsert data to RDS
-        upsert_dataframe_to_postgres(df, 'department_members', engine, 'lms_user_id', os.environ.get("BUSINESS_TRACKING_SCHEMA"))
+        upsert_dataframe_to_postgres(df, 'department_members', engine, 'lms_user_id', os.environ.get("RDS_SCHEMA"))
 
         return {
             "statusCode": 200,
